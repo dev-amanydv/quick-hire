@@ -1,16 +1,29 @@
 import express, { type Request, type Response } from 'express'
-import z, { success } from 'zod';
+import z from 'zod';
 import cors from 'cors';
-import { getGithubUsername } from './utils/utils';
+import { getGithubUsername, JWT_SECRET } from './utils/utils';
 import { githubScraper } from './scrapers/github';
+import { prisma } from '../prisma/db';
+import jwt from "jsonwebtoken";
 
 const app = express();
 
 app.use(express.json());
 app.use(cors())
+
 const formSchema = z.object({
     github: z.url(),
     linkedin: z.string().optional()
+})
+
+const signupSchema = z.object({
+    email: z.email(),
+    password: z.string().min(4)
+})
+
+const signinSchema = z.object({
+    email: z.email(),
+    password: z.string().min(4)
 })
 
 app.get('/api/v1/health', (req: Request, res: Response) => {
@@ -21,9 +34,67 @@ app.get('/api/v1/health', (req: Request, res: Response) => {
     })
 })
 
+app.post('/api/v1/auth/signup', async (req: Request, res: Response) => {
+    const { success, data } = signupSchema.safeParse(req.body);
+    if (!success) {
+        return res.status(401).json({
+            success: false,
+            message: "email and password are required",
+            data: null
+        })
+    };
+
+    const userExist = await prisma.user.findFirst({
+        where: {
+            email: data.email
+        }
+    });
+    if (userExist) {
+        return res.status(400).json({
+            success: false,
+            message: "User already exist",
+            data: null
+        })
+    }
+    const user = await prisma.user.create({
+        data: {
+            email: data.email,
+            password: data.password
+        }
+    })
+
+    const refreshToken = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, {
+        audience: 'User',
+        expiresIn: 7 * 24 * 60 * 60 * 1000,
+        issuer: "interview-mercor"
+    })
+    const accessToken = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, {
+        audience: 'User',
+        expiresIn: 2 * 60 * 60 * 1000,
+        issuer: "interview-mercor"
+    })
+
+    await prisma.user.update({
+        where: {
+            id: user.id
+        },
+        data: {
+            refreshToken
+        }
+    });
+
+    res.cookie()
+
+    res.status(201).json({
+        success: true,
+        message: 'Account created successfully',
+        data: null
+    })
+})
+
 app.post('/api/v1/pre-interview', async (req: Request, res: Response) => {
     const result = formSchema.safeParse(req.body.form);
-    if (!result.success){
+    if (!result.success) {
         return res.status(411).json({
             message: "GitHub and Linkedin urls are required",
             success: false,
@@ -33,7 +104,7 @@ app.post('/api/v1/pre-interview', async (req: Request, res: Response) => {
 
     const githubLink = result.data.github;
     const githubUsername = getGithubUsername(githubLink);
-    if (!githubUsername){
+    if (!githubUsername) {
         return res.status(411).json({
             success: false,
             message: "Invalid username",
@@ -42,7 +113,13 @@ app.post('/api/v1/pre-interview', async (req: Request, res: Response) => {
     }
 
     const scrapedData = await githubScraper(githubUsername);
-
+    // const interview = await prisma.interview.create({
+    //     data: {
+    //         jobRole: "FULL-STACK",
+    //         status: "SCHEDULED",
+    //         githubMetadata: {title},
+    //     }
+    // })
     res.status(200).json({
         success: true,
         message: 'Interview created successfully',
