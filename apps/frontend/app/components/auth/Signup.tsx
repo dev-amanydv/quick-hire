@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import axios from "axios";
 import { BACKEND_URL } from "~/lib/config";
 import { useAuth } from "~/store/store";
+import { FiLoader } from "react-icons/fi";
 
 const signupSchema = z.object({
     email: z.email(),
@@ -30,17 +31,20 @@ export default function SignupPage({ setPopup }: {
         password: ''
     });
     const [fieldErrors, setFieldErrors] = useState<FieldError>();
+    const [loading, setLoading] = useState(false);
     const addUser = useAuth((state) => state.addUser);
     const navigate = useNavigate();
 
     async function onSubmit() {
+        setLoading(true);
         const result = signupSchema.safeParse(form);
         if (!result.success) {
             const fieldErrors = result.error.flatten().fieldErrors;
             setFieldErrors(fieldErrors)
         };
 
-        const res = await axios.post(`${BACKEND_URL}/auth/signup`, {
+        try {
+            const res = await axios.post(`${BACKEND_URL}/auth/signup`, {
             email: form.email,
             password: form.password
         });
@@ -48,8 +52,14 @@ export default function SignupPage({ setPopup }: {
         if (!res.data.success) {
             toast.error(res.data.message)
         };
+        toast.success('Account created successfully')
         addUser({userId: res.data.data.id, email: res.data.data.email});
         navigate('/dashboard', { replace: true })
+        } catch (error) {
+            console.log('Unable to send signup request: ', error)
+        } finally {
+            setLoading(false)
+        }
     }
 
     return (
@@ -73,7 +83,7 @@ export default function SignupPage({ setPopup }: {
                             <span className="text-red-600 text-sm">{fieldErrors?.password ? 'Password must be atleast 4 characters long' : null}</span>
                         </div>
                     </div>
-                    <Button onClick={onSubmit} className="text-white py-5 bg-[#3474F4] hover:bg-[#2d68de] cursor-pointer" >Register</Button>
+                    <Button onClick={onSubmit} className="text-white py-5 bg-[#3474F4] hover:bg-[#2d68de] cursor-pointer" >{loading ? <FiLoader className="size-4 animate-spin"/> : "Register"}</Button>
                     <div className="flex items-center gap-2 text-neutral-500">
                         <hr className="w-full" />
                         or
