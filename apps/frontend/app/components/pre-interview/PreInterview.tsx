@@ -5,8 +5,7 @@ import RoleDetails from "./RoleDetails";
 export default function PreInterview () {
 
     return (
-        <div className="flex flex-col gap-3">
-            <TypographyH3>Take An Interview</TypographyH3>
+        <div className="flex flex-col w-full gap-3">
             <RoleDetails />
         </div>
     )
