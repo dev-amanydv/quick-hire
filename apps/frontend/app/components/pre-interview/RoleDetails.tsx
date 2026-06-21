@@ -67,8 +67,6 @@ export default function RoleDetails({
     experience: "mid",
   });
 
-  const set = (patch: Partial<RoleDetails>) => setData((d) => ({ ...d, ...patch }));
-
   const onSubmit: React.FormEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
     const { success, data: parsed } = roleDetailsSchema.safeParse(data);
@@ -100,7 +98,7 @@ export default function RoleDetails({
                 <button
                   key={r}
                   type="button"
-                  onClick={() => set({ jobRole: r })}
+                  onClick={() => setData((d) => ({...data, jobRole: r}))}
                   className={cn(
                     "rounded-full border px-3.5 py-2 text-sm font-medium transition-colors",
                     on
@@ -123,7 +121,7 @@ export default function RoleDetails({
                 <button
                   key={l.value}
                   type="button"
-                  onClick={() => set({ experience: l.value })}
+                  onClick={() => setData((d) => ({ ...data, experience: l.value}))}
                   className={cn(
                     "flex flex-col gap-1 rounded-xl box-border border px-4 py-2.5 text-left transition-all",
                     on
@@ -148,7 +146,7 @@ export default function RoleDetails({
                 <button
                   key={t.value}
                   type="button"
-                  onClick={() => set({ type: t.value })}
+                  onClick={() => setData((d) => ({ ...data, type: t.value}))}
                   className={cn(
                     "flex items-center justify-between gap-3 rounded-xl border px-4 py-3.5 text-left transition-all",
                     on

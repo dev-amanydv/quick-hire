@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, Check, Clock, FileText, SlidersHorizontal } from
 import { cn } from "~/lib/utils";
 import { Button } from "../ui/button";
 import { MOCK_SESSION, type SessionDetails } from "./types";
+import { InputFile } from "./ui/file-upload";
 
 const QUESTION_OPTIONS = [
   { value: 5, label: "Quick" },
@@ -33,9 +34,16 @@ export default function InterviewDetails({
   setSessionDetails: (value: SessionDetails) => void;
   setStep: (value: number) => void;
 }) {
-  const [data, setData] = useState<SessionDetails>(MOCK_SESSION);
-
-  const set = (patch: Partial<SessionDetails>) => setData((d) => ({ ...d, ...patch }));
+  const [data, setData] = useState<SessionDetails>({
+    resume: {
+      name: "",
+      size: "",
+      parsed: false,
+      skills: []
+    },
+    questions: 5,
+    duration: 15
+  });
 
   const onContinue = () => {
     setSessionDetails(data);
@@ -55,7 +63,7 @@ export default function InterviewDetails({
 
       <div className="space-y-7">
         <Field label="Resume">
-          <div className="overflow-hidden rounded-2xl border bg-card">
+          {data.resume.name ? <div className="overflow-hidden rounded-2xl border bg-card">
             <div className="flex items-center gap-3.5 p-4">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
                 <FileText className="size-5 text-foreground/70" />
@@ -88,7 +96,21 @@ export default function InterviewDetails({
                 ))}
               </div>
             </div>
-          </div>
+          </div> : (
+            <InputFile
+              onComplete={(file) =>
+                setData((d) => ({
+                  ...d,
+                  resume: {
+                    name: file.name,
+                    size: `${file.size} · ${file.ext.toUpperCase()}`,
+                    parsed: true,
+                    skills: MOCK_SESSION.resume.skills,
+                  },
+                }))
+              }
+            />
+          )}
         </Field>
 
         <Field label="Number of questions" icon={<SlidersHorizontal className="size-3.5 text-muted-foreground" />}>
@@ -99,7 +121,7 @@ export default function InterviewDetails({
                 <button
                   key={q.value}
                   type="button"
-                  onClick={() => set({ questions: q.value })}
+                  onClick={() => setData((d) => ({ ...d, questions: q.value }))}
                   className={cn(
                     "flex flex-col items-center gap-1 rounded-xl border px-4 py-3.5 transition-all",
                     on
@@ -117,13 +139,13 @@ export default function InterviewDetails({
 
         <Field label="Max duration" icon={<Clock className="size-3.5 text-muted-foreground" />}>
           <div className="grid grid-cols-4 gap-2.5">
-            {DURATION_OPTIONS.map((d) => {
-              const on = data.duration === d;
+            {DURATION_OPTIONS.map((dur) => {
+              const on = data.duration === dur;
               return (
                 <button
-                  key={d}
+                  key={dur}
                   type="button"
-                  onClick={() => set({ duration: d })}
+                  onClick={() => setData((d) => ({ ...d, duration: dur }))}
                   className={cn(
                     "flex items-baseline justify-center gap-1 rounded-xl border px-4 py-3.5 transition-all",
                     on
@@ -131,7 +153,7 @@ export default function InterviewDetails({
                       : "border-border/30 bg-muted/40 hover:border-foreground/30"
                   )}
                 >
-                  <span className="text-lg font-bold">{d}</span>
+                  <span className="text-lg font-bold">{dur}</span>
                   <span className="text-xs text-muted-foreground">min</span>
                 </button>
               );
