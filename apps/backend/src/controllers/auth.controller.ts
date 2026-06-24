@@ -18,6 +18,14 @@ const googleSchema = z.object({
     email: z.string()
 })
 
+function genUniqueUsername (email: string) {
+    const base = email.split('@')[0] || "guest";
+    const clean = base.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    const unique = clean + crypto.randomUUID().slice(3,7).replace('-', '');
+
+    return unique
+}
+
 export const handleSignup = async (req: Request, res: Response) => {
     try {
         const { success, data } = signupSchema.safeParse(req.body);
@@ -41,10 +49,12 @@ export const handleSignup = async (req: Request, res: Response) => {
             data: null
         })
     }
+    const username = genUniqueUsername(data.email);
     const user = await prisma.user.create({
         data: {
             email: data.email,
-            password: data.password
+            password: data.password,
+            username: username
         }
     })
 

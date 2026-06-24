@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, Clock, FileText, SlidersHorizontal } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { Button } from "../ui/button";
@@ -46,6 +46,8 @@ export default function InterviewDetails({
     questions: 5,
     duration: 15
   });
+  
+
   console.log(interviewId)
   const onContinue = () => {
     setSessionDetails(data);
@@ -73,30 +75,13 @@ export default function InterviewDetails({
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="truncate text-sm font-semibold">{data.resume.name}</span>
-                  {data.resume.parsed && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
-                      <Check className="size-2.5" strokeWidth={3.2} />
-                      Parsed
-                    </span>
-                  )}
+                  
                 </div>
                 <div className="mt-0.5 text-[11.5px] text-muted-foreground">{data.resume.size}</div>
               </div>
               <button type="button" className="text-[13px] font-semibold text-muted-foreground underline underline-offset-2 hover:text-foreground">
                 Replace
               </button>
-            </div>
-            <div className="border-t bg-muted/40 p-4">
-              <div className="mb-2.5 text-[10.5px] uppercase tracking-[0.08em] text-muted-foreground">
-                Detected skills
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {data.resume.skills.map((skill) => (
-                  <span key={skill} className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground/80">
-                    {skill}
-                  </span>
-                ))}
-              </div>
             </div>
           </div> : (
             <InputFile

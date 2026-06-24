@@ -4,6 +4,7 @@ import {
     GetObjectCommand,
     ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
+import type { Readable } from "stream";
 
 const R2_ENDPOINT = process.env.R2_ENDPOINT
 const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME
@@ -23,13 +24,13 @@ const s3 = new S3Client({
     },
 });
 
-async function uploadToBucket(path: string, body?: string) {
-    if (!path) return;
+async function uploadToBucket(key: string, body?: Buffer | Blob | string | Uint8Array | Readable | ReadableStream) {
+    if (!key) return;
     try {
         const res = await s3.send(
             new PutObjectCommand({
                 Bucket: R2_BUCKET_NAME,
-                Key: path,
+                Key: key,
                 Body: body ?? "Hello R2!",
             }),
         );

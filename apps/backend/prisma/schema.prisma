@@ -24,6 +24,13 @@ enum InterviewStatus {
   COMPLETED
 }
 
+enum UploadStatus {
+  UPLOADED_LOCAL
+  PROCESSING
+  FAILED
+  COMPLETED
+}
+
 enum MessageRole {
   User
   Assistant
@@ -46,18 +53,21 @@ enum Experience {
 
 model User {
   id        String          @id @default(uuid())
+  username  String?
   email     String          @unique
   provider  Provider        @default(LOCAL)
   password  String?
   Resume    String?
   interview Interview[]
   refreshToken String?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @default(now())
 }
 
 model Interview {
   id        String          @id @default(uuid())
   jobRole   String
-  resume    String?
+  resume    Resume?
   question  Int?            @default(5)
   duration  Int?            @default(15)
   summary   String?
@@ -70,6 +80,22 @@ model Interview {
   githubMetadata  Json?
   userId    String  
   user      User            @relation(fields: [userId], references: [id])
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @default(now())
+}
+
+model Resume {
+  id          String          @id @default(uuid())
+  name        String
+  size        Float
+  ext         String
+  status      UploadStatus    @default(UPLOADED_LOCAL)
+  error       String?
+  url         String?
+  interviewId String          @unique
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @default(now())
+  interview   Interview       @relation(fields: [interviewId], references: [id])
 }
 
 model Message {
@@ -78,11 +104,15 @@ model Message {
   role        MessageRole     @default(User) 
   interviewId String
   interview   Interview       @relation(fields: [interviewId], references: [id])
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @default(now())
 }
 
 model Result {
   id        String          @id @default(uuid())
   score     Float
   interview Interview?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @default(now())
 }
 

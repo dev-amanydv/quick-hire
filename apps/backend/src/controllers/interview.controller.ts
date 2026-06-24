@@ -2,6 +2,8 @@ import z from "zod";
 import type { NextFunction, Request, Response } from "express";
 import { AppError } from "../utils/AppError";
 import { prisma } from "../../prisma/db";
+import { resumeQueue } from "../queues/queue";
+import path from 'path';
 
 const roleDetailsSchema = z.object({
     role: z.string().min(1),
@@ -34,7 +36,54 @@ export const handleRoleDetails = async (req: Request, res: Response, next: NextF
     })
 }
 
-export const handlePreInterview = async (req: Request, res: Response) => {
+export const handleResume = async (req: Request, res: Response) => {
+    try {
+        const userId = req.userId;
+        if (!userId) throw new AppError(404, 'Unauthorized')
+        const resumeFile = req.file;
+        const { interviewId } = req.body;
+
+        console.log(resumeFile);
+        if (!resumeFile) throw new AppError(404, "ResumeRequired");
+
+        const ext = path.extname(resumeFile.filename);
+        const uniqueName = `${userId}-resume-${interviewId}${ext}`;
+        const s3Key = `users/${userId}/${interviewId}/resume/${uniqueName}`;
+
+        const resume = await prisma.resume.create({
+            data: {
+                name: resumeFile.filename,
+                size: resumeFile.size,
+                ext: ext,
+                status: 'UPLOADED_LOCAL',
+                interviewId: interviewId
+            }
+        })
+        if (!resume) throw new AppError(501, 'InternalServerError');
+
+        const enqueueResumeUpload = await resumeQueue.add(`${userId}-${interviewId}`, {
+            resumeId: resume.id,
+            filePath: resumeFile.path,
+            s3Key: s3Key
+        });
+
+        res.status(200).json({
+        success: true,
+        message: 'Resume uploaded successfully',
+        data: {
+            resume
+        }
+    })
+    } catch (error) {
+        res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        data: null
+    })
+    }
+}
+
+export const handlePreSession = async (req: Request, res: Response) => {
     try {
         const resume = req.file;
         console.log(resume);
