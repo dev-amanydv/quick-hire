@@ -26,6 +26,8 @@ enum InterviewStatus {
 
 enum UploadStatus {
   UPLOADED_LOCAL
+  PARSING
+  FETCHING
   PROCESSING
   FAILED
   COMPLETED

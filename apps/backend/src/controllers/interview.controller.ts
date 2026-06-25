@@ -62,7 +62,7 @@ export const handleResume = async (req: Request, res: Response) => {
         })
         if (!resume) throw new AppError(501, 'InternalServerError');
 
-        const enqueueResumeUpload = await resumeQueue.add(`${userId}-${interviewId}`, {
+        await resumeQueue.add(`${userId}-${interviewId}`, {
             resumeId: resume.id,
             filePath: resumeFile.path,
             s3Key: s3Key,
@@ -86,20 +86,5 @@ export const handleResume = async (req: Request, res: Response) => {
 }
 
 export const handlePreSession = async (req: Request, res: Response) => {
-    try {
-        const resume = req.file;
-        console.log(resume);
-        if (!resume) throw new AppError(404, "ResumeRequired");
-        res.status(200).json({
-        success: true,
-        message: 'Interview created successfully',
-        data: null
-    })
-    } catch (error) {
-        res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-        data: null
-    })
-    }
+    
 }
