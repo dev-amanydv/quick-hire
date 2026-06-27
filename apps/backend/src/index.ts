@@ -7,9 +7,12 @@ import { errorHandler } from './middlewares/error.middleware';
 import { NotFound } from './utils/NotFound';
 import './workers/worker';
 import 'dotenv/config';
+import { startResumeParserWorker, startSourceFetchWorker } from './workers/worker';
 
 const app = express();
 
+startResumeParserWorker();
+startSourceFetchWorker();
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({ origin: "http://localhost:5173",credentials: true }))

@@ -1,15 +1,17 @@
-import { getDocument, GlobalWorkerOptions, type PDFDocumentProxy, type PDFPageProxy } from "pdfjs-dist";
-import type { JobMeta } from "../queues/queue";
+import {
+  getDocument,
+  GlobalWorkerOptions,
+  type PDFDocumentProxy,
+} from "pdfjs-dist/legacy/build/pdf.mjs";
 
 type ResumeLinks = {
     githubUrl: string[],
     websites: string[]
 }
 
-GlobalWorkerOptions.workerSrc = import.meta.resolve("pdfjs-dist/build/pdf.worker.mjs");
+GlobalWorkerOptions.workerSrc = import.meta.resolve("pdfjs-dist/legacy/build/pdf.worker.mjs");
 
-export async function parseResume(meta: JobMeta) {
-    const { filePath } = meta
+export async function parseResume(filePath: string) {
     const bytes = new Uint8Array(await Bun.file(filePath).arrayBuffer());
     const doc: PDFDocumentProxy = await getDocument({ data: bytes }).promise;
 
@@ -42,7 +44,7 @@ function classifyLinks (rawLinks: string[]){
         websites: [],
         githubUrl: []
     };
-    for (const link in uniqueLinks){
+    for (const link of uniqueLinks){
         try {
             const hostname = new URL(link).hostname.toLowerCase();
 

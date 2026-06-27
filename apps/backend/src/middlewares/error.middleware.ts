@@ -17,7 +17,7 @@ export const errorHandler = (err: Error | null, req: Request, res: Response, nex
     } else {
         message = err?.message || message
     };
-
+    console.log(err)
     const response = {
         success: false,
         message: message,

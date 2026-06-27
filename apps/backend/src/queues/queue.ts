@@ -3,7 +3,7 @@ import { connection } from "../workers/worker";
 
 export interface JobMeta {
     resumeId: string,
-    filePath: string,
+    s3key: string,
     interviewId: string
 }
 
@@ -49,19 +49,20 @@ export const resumeParseQueue = new Queue('resume-parse', {
 export const flowProducer = new FlowProducer({ connection });
 
 const id = (job: string, m: JobMeta, extra?: string) => {
-    return `${job}:${m.resumeId}${extra ? ':' + extra : ''}`
+    return `${job}-${m.resumeId}${extra ? '-' + extra : ''}`
 }
 
-export function enqueueResumeParse(meta: JobMeta){
-    return resumeParseQueue.add('parse-pdf', {meta}, { jobId: id('parse-pdf', meta)})
+export async function enqueueResumeParse(meta: JobMeta, filePath: string){
+    return await resumeParseQueue.add('parse-pdf', { meta, filePath }, { jobId: id('parse-pdf', meta)})
 }
 
 export function buildSourceFetchFlow (input: {
     meta: JobMeta,
+    text: string,
     githubUrls: string[],
     siteUrls: string[]
 }){
-    const { meta, githubUrls, siteUrls } = input;
+    const { meta, githubUrls, siteUrls, text } = input;
 
     const children: FlowJob[] = [];
 
@@ -94,7 +95,7 @@ export function buildSourceFetchFlow (input: {
     return flowProducer.add({
         name: 'assemble-profile',
         queueName: 'resume-parse',
-        data: { meta },
+        data: { meta, text },
         children
     })
 }

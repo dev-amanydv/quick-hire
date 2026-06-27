@@ -2,7 +2,7 @@ import z from "zod";
 import type { NextFunction, Request, Response } from "express";
 import { AppError } from "../utils/AppError";
 import { prisma } from "../../prisma/db";
-import { enqueueResumeParse, resumeUploadQueue } from "../queues/queue";
+import { resumeUploadQueue } from "../queues/queue";
 import path from 'path';
 
 const roleDetailsSchema = z.object({
@@ -61,17 +61,12 @@ export const handleResume = async (req: Request, res: Response) => {
             }
         })
         if (!resume) throw new AppError(501, 'InternalServerError');
-        
-        await enqueueResumeParse({
-            resumeId: resume.id,
-            filePath: resumeFile.path,
-            interviewId: interviewId
-        })
         await resumeUploadQueue.add(`${userId}-${interviewId}`, {
             resumeId: resume.id,
             filePath: resumeFile.path,
             s3Key: s3Key,
-            size: resumeFile.size
+            size: resumeFile.size,
+            interviewId: interviewId
         });
 
         res.status(200).json({
@@ -80,7 +75,8 @@ export const handleResume = async (req: Request, res: Response) => {
         data: {
             resume
         }
-    })
+    });
+
     } catch (error) {
         res.status(500).json({
         success: false,
