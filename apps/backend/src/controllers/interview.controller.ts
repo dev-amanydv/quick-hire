@@ -61,12 +61,12 @@ export const handleResume = async (req: Request, res: Response) => {
             }
         })
         if (!resume) throw new AppError(501, 'InternalServerError');
-
         await resumeUploadQueue.add(`${userId}-${interviewId}`, {
             resumeId: resume.id,
             filePath: resumeFile.path,
             s3Key: s3Key,
-            size: resumeFile.size
+            size: resumeFile.size,
+            interviewId: interviewId
         });
 
         res.status(200).json({
@@ -75,7 +75,8 @@ export const handleResume = async (req: Request, res: Response) => {
         data: {
             resume
         }
-    })
+    });
+
     } catch (error) {
         res.status(500).json({
         success: false,
